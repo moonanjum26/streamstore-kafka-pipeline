@@ -45,8 +45,6 @@ A Kafka-based order-events pipeline built around schema-safe evolution: every me
 
 **Validation layered separately from the wire schema.** Avro and the registry only guarantee a message's *shape* is safe to deserialize — not that its values make business sense. `models.py` defines an `Order` Pydantic model with its own validators (positive quantity, non-blank `user`/`item`), decoupled from Kafka entirely so it's unit-testable in isolation.
 
-**CI-ready compatibility gate.** `check_schema_compatibility.py` calls the registry's test-only compatibility endpoint — no registration, no side effects — so a broken schema change fails in CI before a producer ever deploys it.
-
 ## Project structure
 
 | File | Role |
@@ -56,7 +54,6 @@ A Kafka-based order-events pipeline built around schema-safe evolution: every me
 | `tracker.py` | Consumes from `orders`, validates with `models.Order`, writes to Postgres, routes failures to the DLQ |
 | `tracker-dlq.py` | Consumes from `orders-dlq`, archives each failed message to S3 as JSON |
 | `order_schema.avsc` | The Avro schema registered for the `orders` topic |
-| `check_schema_compatibility.py` | Checks a candidate schema against the registry *before* deploying — meant to run in CI ahead of a producer deploy |
 | `test_order.py` | pytest unit tests for the `Order` model's validators |
 | `docker-compose.yaml` | Local Kafka (KRaft mode), Schema Registry, and Postgres |
 
@@ -82,15 +79,10 @@ A Kafka-based order-events pipeline built around schema-safe evolution: every me
 
 ## Schema evolution
 
-The `orders-value` subject is set to `FULL` compatibility. Before registering a schema change, run:
-```bash
-python check_schema_compatibility.py
-```
-This calls the registry's compatibility-test endpoint (no side effects) and exits non-zero if the change would break either direction — the same check a CI pipeline would run before allowing a producer deploy.
+The `orders-value` subject is set to `FULL` compatibility, so the registry itself rejects any schema change that isn't safe in both directions — no separate tooling needed to enforce it.
 
-Two patterns this project follows for safe evolution:
+One pattern this project follows for safe evolution:
 - **Adding a field:** always optional, with a default (e.g. `discount`) — safe in both directions immediately.
-- **Removing or renaming a field:** never in one step. A field is first given a default (or an `aliases` entry, for renames) and deployed; only once no consumer depends on the old shape is it fully removed — the classic *expand–contract* pattern.
 
 ## Testing
 
@@ -102,4 +94,11 @@ Covers: valid orders, optional `discount`, rejected zero/negative quantity, reje
 
 ## Screenshots
 
-*(producer output, tracker output, Postgres `orders` table, S3 DLQ listing)*
+**Producer sending orders:**
+![Producer output](screenshots/producer-output.png)
+
+**Tracker consuming and writing to Postgres:**
+![Tracker output](screenshots/tracker-output.png)
+
+**Postgres orders table:**
+![Postgres table](screenshots/postgres-table.png)
