@@ -1,0 +1,12 @@
+.env
+.venv/
+__pycache__/
+infra/.terraform/
+infra/*.tfstate
+infra/*.tfstate.backup
+infra/.terraform.lock.hcl
+producer.log
+*.tfstate
+*.tfstate.backup
+.pytest_cache/
+.idea/

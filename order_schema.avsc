@@ -1,0 +1,27 @@
+{
+  "type": "record",
+  "name": "Order",
+  "namespace": "com.streamstore.orders",
+  "fields": [
+    {
+      "name": "order_id",
+      "type": "string"
+    },
+    {
+      "name": "user",
+      "type": "string"
+    },
+    {
+      "name": "item",
+      "type": "string"
+    },
+    {
+      "name": "quantity",
+      "type": "int"
+    },
+    { "name": "discount",
+      "type": ["null", "float"],
+      "default": null
+    }
+  ]
+}
