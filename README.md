@@ -57,9 +57,10 @@ A Kafka-based order-events pipeline built around schema-safe evolution: every me
 | `test_order.py` | pytest unit tests for the `Order` model's validators |
 | `docker-compose.yaml` | Local Kafka (KRaft mode), Schema Registry, and Postgres |
 
-## Setup
+Setup
 
-**Prerequisites:** Docker, Python 3.11+, an AWS account with an S3 bucket (for the DLQ archive)
+Prerequisites: Docker, Python 3.11+, an AWS account with an S3 bucket (for the DLQ archive), AWS credentials configured locally (aws configure, or AWS_ACCESS_KEY_ID/AWS_SECRET_ACCESS_KEY set as environment variables)
+
 
 1. Clone the repo and create a `.env` (see `.env.example`) with your Postgres and S3 config.
 2. Start the infrastructure:
