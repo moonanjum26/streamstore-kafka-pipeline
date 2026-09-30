@@ -102,3 +102,6 @@ Covers: valid orders, optional `discount`, rejected zero/negative quantity, reje
 
 **Postgres orders table:**
 ![Postgres table](screenshots/postgres-table.png)
+
+**DLQ archived to S3:**
+![S3 DLQ listing](screenshots/s3-dlq.png)
