@@ -1,6 +1,6 @@
 # StreamStore — Kafka Order Event Pipeline
 
-A Kafka-based order-events pipeline built around schema-safe evolution: every message is Avro-encoded, checked against Confluent Schema Registry under `FULL` compatibility, validated against business rules, and routed to a dead-letter queue on failure instead of taking the pipeline down. Designed the way a real order-ingestion service would be — producer and consumer evolve independently, and neither one can break the other.
+A Kafka-based order-events pipeline built around schema-safe evolution: every message is Avro-encoded, checked against Confluent Schema Registry under FULL compatibility, validated against business rules, and routed to a dead-letter queue on failure instead of taking the pipeline down. Designed the way a real order-ingestion service would be — producer and consumer evolve independently, and neither one can break the other.
 
 ## Architecture
 
@@ -39,11 +39,11 @@ A Kafka-based order-events pipeline built around schema-safe evolution: every me
 
 **Avro + Schema Registry over raw JSON.** JSON enforces nothing — a producer can silently rename or retype a field and every downstream consumer breaks with no warning until runtime. Every message here is tied to a registered Avro schema, and incompatible changes are rejected at register-time, before they ever reach a consumer.
 
-**`FULL` compatibility, not `BACKWARD`.** `BACKWARD` only guarantees a new consumer can read old data — it says nothing about an already-running old consumer surviving a producer that deploys first. Since producer and consumer here are meant to evolve and deploy independently, `FULL` closes that gap: every schema change is verified safe in both directions before it's allowed, so deploy order is never a coordination problem.
+**FULL compatibility, not BACKWARD.** BACKWARD only guarantees a new consumer can read old data — it says nothing about an already-running old consumer surviving a producer that deploys first. Since producer and consumer here are meant to evolve and deploy independently, FULL closes that gap: every schema change is verified safe in both directions before it's allowed, so deploy order is never a coordination problem.
 
-**Dead-letter queue with typed failure stages.** A message can fail for unrelated reasons — bad business data, a database outage, or corrupt/incompatible bytes on the wire — and none of them should take the consumer down. `tracker.py` catches each case separately, tags it (`validation`, `database write`, `schema_violation`), and routes it to `orders-dlq` so processing continues without interruption. `tracker-dlq.py` archives every failure to S3 as JSON, partitioned by date, for later inspection — JSON over Parquet here because DLQ records are read one at a time during debugging, not queried in bulk.
+**Dead-letter queue with typed failure stages.** A message can fail for unrelated reasons — bad business data, a database outage, or corrupt/incompatible bytes on the wire — and none of them should take the consumer down. tracker.py catches each case separately, tags it (validation, database write, schema_violation), and routes it to orders-dlq so processing continues without interruption. tracker-dlq.py archives every failure to S3 as JSON, partitioned by date, for later inspection — JSON over Parquet here because DLQ records are read one at a time during debugging, not queried in bulk.
 
-**Validation layered separately from the wire schema.** Avro and the registry only guarantee a message's *shape* is safe to deserialize — not that its values make business sense. `models.py` defines an `Order` Pydantic model with its own validators (positive quantity, non-blank `user`/`item`), decoupled from Kafka entirely so it's unit-testable in isolation.
+**Validation layered separately from the wire schema.** Avro and the registry only guarantee a message's *shape* is safe to deserialize — not that its values make business sense. models.py defines an Order Pydantic model with its own validators (positive quantity, non-blank user/item), decoupled from Kafka entirely so it's unit-testable in isolation.
 
 ## Project structure
 
